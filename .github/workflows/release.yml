@@ -10,13 +10,7 @@ on:
         required: true
 jobs:
   release:
-    strategy:
-      matrix:
-        # Use these Java versions
-        java: [21]
-        # and run on both Linux and Windows
-        os: [ubuntu-22.04]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -36,13 +30,12 @@ jobs:
         run: git fetch --tags
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
-      - name: Setup JDK ${{ matrix.java }}
+      - name: Setup JDK 21
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: ${{ matrix.java }}
+          java-version: 21
       - name: Make Gradle wrapper executable
-        if: ${{ runner.os != 'Windows' }}
         run: chmod +x ./gradlew
       - name: Build
         run: ./gradlew generateChangelog build publish github modrinth curseforge --stacktrace --parallel -PlastTag="v${{ github.event.inputs.previousVersion }}" -PcurrentTag="v${{ github.event.inputs.version }}"
@@ -55,7 +48,6 @@ jobs:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           DISCORD_ANNOUNCEMENT_WEBHOOK: ${{ secrets.DISCORD_ANNOUNCEMENT_WEBHOOK }}
       - name: Capture build artifacts
-        if: ${{ runner.os == 'Linux' && matrix.java == '17' }} # Only upload artifacts built from LTS java on one OS
         uses: actions/upload-artifact@v3
         with:
           name: Artifacts
